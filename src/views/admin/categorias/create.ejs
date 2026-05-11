@@ -1,0 +1,23 @@
+<%- include('../../partials/header') %>
+
+<div class="page-header">
+  <h1>Nova Categoria</h1>
+  <a href="/admin/categorias" class="btn btn-outline">← Voltar</a>
+</div>
+
+<% if (error && error.length > 0) { %><div class="alert alert-error"><%= error %></div><% } %>
+
+<div class="card form-card">
+  <form action="/admin/categorias" method="POST">
+    <div class="form-group">
+      <label for="nome">Nome da categoria *</label>
+      <input type="text" id="nome" name="nome" required placeholder="Ex: Sobremesas">
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Criar Categoria</button>
+      <a href="/admin/categorias" class="btn btn-outline">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<%- include('../../partials/footer') %>

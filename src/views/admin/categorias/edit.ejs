@@ -1,0 +1,24 @@
+<%- include('../../partials/header') %>
+
+<div class="page-header">
+  <h1>Editar Categoria</h1>
+  <a href="/admin/categorias" class="btn btn-outline">← Voltar</a>
+</div>
+
+<% if (error && error.length > 0) { %><div class="alert alert-error"><%= error %></div><% } %>
+
+<div class="card form-card">
+  <form action="/admin/categorias/<%= categoria.id %>?_method=PUT" method="POST">
+    <input type="hidden" name="_method" value="PUT">
+    <div class="form-group">
+      <label for="nome">Nome da categoria *</label>
+      <input type="text" id="nome" name="nome" required value="<%= categoria.nome %>">
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Salvar</button>
+      <a href="/admin/categorias" class="btn btn-outline">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<%- include('../../partials/footer') %>

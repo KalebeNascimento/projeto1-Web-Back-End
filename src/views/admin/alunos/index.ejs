@@ -1,0 +1,48 @@
+<%- include('../../partials/header') %>
+
+<div class="page-header">
+  <h1>Gerenciar Alunos</h1>
+  <a href="/admin/alunos/novo" class="btn btn-primary">+ Novo Aluno</a>
+</div>
+
+<a href="/admin" class="btn btn-outline btn-sm mb-1">← Voltar ao Painel</a>
+
+<% if (success && success.length > 0) { %><div class="alert alert-success"><%= success %></div><% } %>
+<% if (error && error.length > 0) { %><div class="alert alert-error"><%= error %></div><% } %>
+
+<% if (alunos.length === 0) { %>
+  <div class="empty-state"><p>Nenhum aluno cadastrado.</p></div>
+<% } else { %>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>Cadastrado em</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% alunos.forEach(a => { %>
+          <tr>
+            <td><%= a.id %></td>
+            <td><%= a.nome %></td>
+            <td><%= a.email %></td>
+            <td><%= new Date(a.created_at).toLocaleDateString('pt-BR') %></td>
+            <td class="actions">
+              <a href="/admin/alunos/<%= a.id %>/editar" class="btn btn-sm btn-outline">Editar</a>
+              <form action="/admin/alunos/<%= a.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Excluir este aluno?')">
+                <input type="hidden" name="_method" value="DELETE">
+                <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+<% } %>
+
+<%- include('../../partials/footer') %>

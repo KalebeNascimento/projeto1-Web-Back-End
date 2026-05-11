@@ -1,0 +1,44 @@
+<%- include('../partials/header') %>
+
+<div class="page-header">
+  <h1>Painel Administrativo</h1>
+  <span class="badge badge-admin">Administrador</span>
+</div>
+
+<% if (success && success.length > 0) { %><div class="alert alert-success"><%= success %></div><% } %>
+<% if (error && error.length > 0) { %><div class="alert alert-error"><%= error %></div><% } %>
+
+<div class="stats-grid">
+  <a href="/admin/alunos" class="stat-card">
+    <div class="stat-number"><%= totalAlunos %></div>
+    <div class="stat-label">Alunos</div>
+  </a>
+  <a href="/admin/categorias" class="stat-card">
+    <div class="stat-number"><%= totalCategorias %></div>
+    <div class="stat-label">Categorias</div>
+  </a>
+  <a href="/admin/habilidades" class="stat-card">
+    <div class="stat-number"><%= totalHabilidades %></div>
+    <div class="stat-label">Habilidades</div>
+  </a>
+</div>
+
+<div class="admin-menu">
+  <div class="card">
+    <h3>Gerenciar Alunos</h3>
+    <p>Cadastrar, editar e excluir alunos do sistema.</p>
+    <a href="/admin/alunos" class="btn btn-primary">Gerenciar</a>
+  </div>
+  <div class="card">
+    <h3>Gerenciar Categorias</h3>
+    <p>Definir categorias para as receitas.</p>
+    <a href="/admin/categorias" class="btn btn-primary">Gerenciar</a>
+  </div>
+  <div class="card">
+    <h3>Gerenciar Habilidades</h3>
+    <p>Definir habilidades culinárias disponíveis.</p>
+    <a href="/admin/habilidades" class="btn btn-primary">Gerenciar</a>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

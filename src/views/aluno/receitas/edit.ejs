@@ -1,0 +1,60 @@
+<%- include('../../partials/header') %>
+
+<div class="page-header">
+  <h1>Editar Receita</h1>
+  <a href="/aluno/receitas" class="btn btn-outline">← Voltar</a>
+</div>
+
+<% if (error && error.length > 0) { %><div class="alert alert-error"><%= error %></div><% } %>
+
+<div class="card form-card">
+  <form action="/aluno/receitas/<%= receita.id %>?_method=PUT" method="POST">
+    <input type="hidden" name="_method" value="PUT">
+
+    <div class="form-group">
+      <label for="nome">Nome da receita *</label>
+      <input type="text" id="nome" name="nome" required value="<%= receita.nome %>">
+    </div>
+    <div class="form-group">
+      <label for="descricao">Descrição</label>
+      <textarea id="descricao" name="descricao" rows="4"><%= receita.descricao || '' %></textarea>
+    </div>
+    <div class="form-group">
+      <label for="link_externo">Link externo</label>
+      <input type="url" id="link_externo" name="link_externo" value="<%= receita.link_externo || '' %>" placeholder="https://...">
+    </div>
+
+    <div class="form-group">
+      <label>Categorias</label>
+      <div class="checkbox-grid">
+        <% categorias.forEach(c => { %>
+          <label class="checkbox-label">
+            <input type="checkbox" name="categorias" value="<%= c.id %>"
+              <%= categoriasAtuais.includes(c.id) ? 'checked' : '' %>>
+            <%= c.nome %>
+          </label>
+        <% }) %>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Alunos responsáveis</label>
+      <div class="checkbox-grid">
+        <% alunos.forEach(a => { %>
+          <label class="checkbox-label">
+            <input type="checkbox" name="coautores" value="<%= a.id %>"
+              <%= alunosAtuais.includes(a.id) ? 'checked' : '' %>>
+            <%= a.nome %><%= a.id === usuario.id ? ' (você)' : '' %>
+          </label>
+        <% }) %>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+      <a href="/aluno/receitas" class="btn btn-outline">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<%- include('../../partials/footer') %>

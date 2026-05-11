@@ -1,0 +1,42 @@
+<%- include('../partials/header') %>
+
+<div class="page-header">
+  <h1>Olá, <%= usuario.nome %>!</h1>
+  <span class="badge badge-aluno">Aluno</span>
+</div>
+
+<% if (success && success.length > 0) { %><div class="alert alert-success"><%= success %></div><% } %>
+<% if (error && error.length > 0) { %><div class="alert alert-error"><%= error %></div><% } %>
+
+<div class="admin-menu">
+  <div class="card">
+    <h3>Minhas Receitas</h3>
+    <p><strong><%= receitas.length %></strong> receita(s) cadastrada(s).</p>
+    <a href="/aluno/receitas" class="btn btn-primary">Gerenciar Receitas</a>
+    <a href="/aluno/receitas/nova" class="btn btn-outline mt-1">+ Nova Receita</a>
+  </div>
+  <div class="card">
+    <h3>Minhas Habilidades</h3>
+    <p><strong><%= habilidades.length %></strong> habilidade(s) registrada(s).</p>
+    <a href="/aluno/habilidades" class="btn btn-primary">Gerenciar Habilidades</a>
+  </div>
+</div>
+
+<% if (habilidades.length > 0) { %>
+  <div class="card mt-2">
+    <h3>Minhas Habilidades Culinárias</h3>
+    <div class="skills-list">
+      <% habilidades.forEach(h => { %>
+        <div class="skill-item">
+          <span class="skill-name"><%= h.nome %></span>
+          <div class="skill-bar">
+            <div class="skill-fill" style="width: <%= h.nivel * 10 %>%"></div>
+          </div>
+          <span class="skill-level"><%= h.nivel %>/10</span>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+<% } %>
+
+<%- include('../partials/footer') %>

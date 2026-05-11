@@ -1,0 +1,46 @@
+<%- include('../../partials/header') %>
+
+<div class="page-header">
+  <h1>Minhas Receitas</h1>
+  <a href="/aluno/receitas/nova" class="btn btn-primary">+ Nova Receita</a>
+</div>
+
+<a href="/aluno" class="btn btn-outline btn-sm mb-1">← Voltar ao Painel</a>
+
+<% if (success && success.length > 0) { %><div class="alert alert-success"><%= success %></div><% } %>
+<% if (error && error.length > 0) { %><div class="alert alert-error"><%= error %></div><% } %>
+
+<% if (receitas.length === 0) { %>
+  <div class="empty-state">
+    <p>Você ainda não possui receitas. <a href="/aluno/receitas/nova">Cadastrar primeira receita</a>.</p>
+  </div>
+<% } else { %>
+  <div class="grid">
+    <% receitas.forEach(r => { %>
+      <div class="card recipe-card">
+        <h3><%= r.nome %></h3>
+        <p class="recipe-author">Criada por: <strong><%= r.criador_nome %></strong></p>
+        <% if (r.descricao) { %><p class="recipe-desc"><%= r.descricao %></p><% } %>
+        <% if (r.categorias_nomes) { %>
+          <div class="tags">
+            <% r.categorias_nomes.split(',').forEach(cat => { %>
+              <span class="tag"><%= cat.trim() %></span>
+            <% }) %>
+          </div>
+        <% } %>
+        <% if (r.link_externo) { %>
+          <a href="<%= r.link_externo %>" target="_blank" class="btn btn-sm btn-outline mt-1">Ver completa ↗</a>
+        <% } %>
+        <div class="card-actions mt-1">
+          <a href="/aluno/receitas/<%= r.id %>/editar" class="btn btn-sm btn-outline">Editar</a>
+          <form action="/aluno/receitas/<%= r.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Excluir esta receita?')">
+            <input type="hidden" name="_method" value="DELETE">
+            <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
+          </form>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+<% } %>
+
+<%- include('../../partials/footer') %>

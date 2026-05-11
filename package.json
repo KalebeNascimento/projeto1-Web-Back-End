@@ -1,0 +1,26 @@
+{
+  "name": "projeto1-web-back-end",
+  "version": "1.0.0",
+  "description": "Portfólio de receitas culinárias – UTFPR Web Back-End",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:40709/git/KalebeNascimento/projeto1-Web-Back-End"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.9.0",
+    "connect-flash": "^0.1.1",
+    "ejs": "^5.0.2",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "method-override": "^3.0.0"
+  }
+}

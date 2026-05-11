@@ -1,0 +1,48 @@
+<%- include('../partials/header') %>
+
+<div class="page-header">
+  <h1><%= categoriaFiltro ? `Receitas: ${categoriaFiltro.nome}` : 'Todas as Receitas' %></h1>
+  <a href="/relatorio" class="btn btn-outline">Ver Relatório de Habilidades</a>
+</div>
+
+<div class="filter-bar">
+  <span>Filtrar por categoria:</span>
+  <a href="/" class="tag <%= !categoriaFiltro ? 'tag-active' : '' %>">Todas</a>
+  <% categorias.forEach(c => { %>
+    <a href="/categorias/<%= c.id %>/receitas" class="tag <%= categoriaFiltro && categoriaFiltro.id === c.id ? 'tag-active' : '' %>">
+      <%= c.nome %>
+    </a>
+  <% }) %>
+</div>
+
+<% if (receitas.length === 0) { %>
+  <div class="empty-state">
+    <p>Nenhuma receita encontrada.</p>
+  </div>
+<% } else { %>
+  <div class="grid">
+    <% receitas.forEach(r => { %>
+      <div class="card recipe-card">
+        <h3><%= r.nome %></h3>
+        <p class="recipe-author">Por: <strong><%= r.criador_nome %></strong></p>
+        <% if (r.descricao) { %>
+          <p class="recipe-desc"><%= r.descricao %></p>
+        <% } %>
+        <% if (r.categorias_nomes) { %>
+          <div class="tags">
+            <% r.categorias_nomes.split(',').forEach(cat => { %>
+              <span class="tag"><%= cat.trim() %></span>
+            <% }) %>
+          </div>
+        <% } %>
+        <% if (r.link_externo) { %>
+          <a href="<%= r.link_externo %>" target="_blank" class="btn btn-sm btn-outline mt-1">
+            Ver receita completa ↗
+          </a>
+        <% } %>
+      </div>
+    <% }) %>
+  </div>
+<% } %>
+
+<%- include('../partials/footer') %>

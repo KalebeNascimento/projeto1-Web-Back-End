@@ -1,0 +1,37 @@
+<%- include('../partials/header') %>
+
+<div class="page-header">
+  <h1>Relatório de Habilidades Culinárias</h1>
+  <a href="/" class="btn btn-outline">← Voltar às Receitas</a>
+</div>
+
+<p class="text-muted">Proporção de alunos cadastrados que dominam cada habilidade.</p>
+
+<% if (habilidades.length === 0) { %>
+  <div class="empty-state">
+    <p>Nenhuma habilidade cadastrada.</p>
+  </div>
+<% } else { %>
+  <div class="report-grid">
+    <% habilidades.forEach(h => { %>
+      <div class="card report-card">
+        <h3><%= h.nome %></h3>
+        <div class="report-stat">
+          <span class="stat-number"><%= h.proporcao %>%</span>
+          <span class="stat-label">dos alunos possuem</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: <%= h.proporcao %>%"></div>
+        </div>
+        <div class="report-details">
+          <span><%= h.total_alunos %> aluno(s)</span>
+          <% if (h.media_nivel) { %>
+            <span>Nível médio: <strong><%= h.media_nivel %>/10</strong></span>
+          <% } %>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+<% } %>
+
+<%- include('../partials/footer') %>
