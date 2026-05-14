@@ -3,6 +3,8 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const methodOverride = require('method-override');
 const path = require('path');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./src/config/swagger');
 
 require('./src/config/database');
 
@@ -30,6 +32,13 @@ const authRoutes = require('./src/routes/auth');
 const adminRoutes = require('./src/routes/admin');
 const alunoRoutes = require('./src/routes/aluno');
 const publicRoutes = require('./src/routes/public');
+const apiRoutes = require('./src/routes/api');
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: 'Portfólio Culinário – API Docs',
+  swaggerOptions: { persistAuthorization: true }
+}));
+app.use('/api/v1', apiRoutes);
 
 app.use('/', authRoutes);
 app.use('/admin', adminRoutes);
@@ -50,6 +59,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
   console.log('Admin padrão: admin@portfolio.com / admin123');
+  console.log(`Swagger UI:   http://localhost:${PORT}/api-docs`);
 });
 
 module.exports = app;
