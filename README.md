@@ -123,7 +123,25 @@ habilidades               receita_aluno     categorias
 ### Pré-requisitos
 
 - [Node.js](https://nodejs.org/) versão 18 ou superior
-- [MongoDB Community](https://www.mongodb.com/try/download/community) instalado e rodando
+- MongoDB: local **ou** MongoDB Atlas (nuvem — gratuito)
+
+### Configurando o MongoDB
+
+#### Opção A — MongoDB Atlas (recomendado, gratuito na nuvem)
+
+1. Crie uma conta em [mongodb.com/atlas](https://www.mongodb.com/pt-br/cloud/atlas/register)
+2. Crie um cluster gratuito
+3. Em **Security → QuickStart**, defina usuário e senha
+4. Em **Databases → Connect → Drivers**, copie a string de conexão
+5. Em **Network Access**, libere seu IP (ou `0.0.0.0/0` para qualquer IP)
+6. Crie o arquivo `.env` na raiz do projeto:
+```
+MONGO_URI=mongodb+srv://usuario:senha@cluster0.xxxxx.mongodb.net/portfolio_culinario
+```
+
+#### Opção B — MongoDB local
+
+Instale o [MongoDB Community](https://www.mongodb.com/try/download/community) e inicie o serviço. A string padrão `mongodb://localhost/portfolio_culinario` é usada automaticamente.
 
 ### Passo a passo
 
@@ -138,9 +156,15 @@ cd projeto1-Web-Back-End
 npm install
 ```
 
-**3. Inicie o MongoDB** (caso não esteja rodando como serviço do Windows)
-```bash
-mongod
+**3. Configure a string de conexão do MongoDB**
+
+Edite o arquivo `src/config/mongodb.js`:
+```js
+const StringCon = {
+  connection: 'mongodb://localhost/portfolio_culinario'  // local
+  // ou cole aqui a string do Atlas
+}
+module.exports = StringCon;
 ```
 
 **4. Inicie o servidor**

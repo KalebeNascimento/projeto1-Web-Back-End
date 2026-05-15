@@ -7,8 +7,15 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./src/config/swagger');
 
 require('./src/config/database');
-const connectMongoDB = require('./src/config/mongodb');
-connectMongoDB();
+
+const mongoose = require('mongoose');
+const db_mongoose = require('./src/config/mongodb');
+
+mongoose.connect(db_mongoose.connection).then(() => {
+  console.log('MongoDB conectado:', db_mongoose.connection);
+}).catch(() => {
+  console.warn('MongoDB não disponível. Comentários estarão desativados.');
+});
 
 const app = express();
 
