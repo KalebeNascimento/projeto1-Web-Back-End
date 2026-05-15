@@ -13,8 +13,9 @@ const db_mongoose = require('./src/config/mongodb');
 
 mongoose.connect(db_mongoose.connection).then(() => {
   console.log('MongoDB conectado:', db_mongoose.connection);
-}).catch(() => {
+}).catch((err) => {
   console.warn('MongoDB não disponível. Comentários estarão desativados.');
+  console.error('Erro MongoDB:', err.message);
 });
 
 const app = express();
