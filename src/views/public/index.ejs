@@ -35,11 +35,14 @@
             <% }) %>
           </div>
         <% } %>
-        <% if (r.link_externo) { %>
-          <a href="<%= r.link_externo %>" target="_blank" class="btn btn-sm btn-outline mt-1">
-            Ver receita completa ↗
-          </a>
-        <% } %>
+        <div class="card-actions mt-1">
+          <a href="/receitas/<%= r.id %>" class="btn btn-sm btn-primary">Ver detalhes</a>
+          <% if (r.link_externo) { %>
+            <a href="<%= r.link_externo %>" target="_blank" class="btn btn-sm btn-outline">
+              Receita completa ↗
+            </a>
+          <% } %>
+        </div>
       </div>
     <% }) %>
   </div>

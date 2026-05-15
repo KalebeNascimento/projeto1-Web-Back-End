@@ -1,0 +1,134 @@
+<%- include('../partials/header') %>
+
+<a href="/" class="btn btn-outline btn-sm mb-1">← Voltar às receitas</a>
+
+<% if (success && success.length > 0) { %><div class="alert alert-success"><%= success %></div><% } %>
+<% if (error && error.length > 0) { %><div class="alert alert-error"><%= error %></div><% } %>
+
+<div class="receita-detail card">
+  <div class="receita-detail-header">
+    <h1><%= receita.nome %></h1>
+    <% if (receita.categorias && receita.categorias.length > 0) { %>
+      <div class="tags">
+        <% receita.categorias.forEach(c => { %>
+          <a href="/categorias/<%= c.id %>/receitas" class="tag"><%= c.nome %></a>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+
+  <% if (receita.descricao) { %>
+    <div class="receita-descricao">
+      <p><%= receita.descricao %></p>
+    </div>
+  <% } %>
+
+  <div class="receita-meta">
+    <div class="meta-item">
+      <span class="meta-label">Criado por</span>
+      <span class="meta-value"><%= receita.criador_nome %></span>
+    </div>
+    <% if (receita.alunos_responsaveis && receita.alunos_responsaveis.length > 1) { %>
+      <div class="meta-item">
+        <span class="meta-label">Co-autores</span>
+        <span class="meta-value">
+          <%= receita.alunos_responsaveis.map(a => a.nome).join(', ') %>
+        </span>
+      </div>
+    <% } %>
+    <div class="meta-item">
+      <span class="meta-label">Publicado em</span>
+      <span class="meta-value">
+        <%= new Date(receita.created_at).toLocaleDateString('pt-BR') %>
+      </span>
+    </div>
+  </div>
+
+  <% if (receita.link_externo) { %>
+    <div class="mt-2">
+      <a href="<%= receita.link_externo %>" target="_blank" class="btn btn-primary">
+        Ver receita completa ↗
+      </a>
+    </div>
+  <% } %>
+</div>
+
+<!-- ── SEÇÃO DE COMENTÁRIOS (MongoDB) ────────────────── -->
+<section class="comentarios-section">
+  <h2 class="comentarios-title">
+    Comentários
+    <span class="badge-count"><%= comentarios.length %></span>
+  </h2>
+
+  <!-- Formulário -->
+  <div class="card comentario-form-card">
+    <h3>Deixe um comentário</h3>
+    <form action="/receitas/<%= receita.id %>/comentarios" method="POST">
+      <div class="form-group">
+        <label for="autor_nome">Seu nome *</label>
+        <input
+          type="text"
+          id="autor_nome"
+          name="autor_nome"
+          required
+          maxlength="100"
+          placeholder="Como deseja ser identificado?"
+          value="<%= typeof usuario !== 'undefined' && usuario ? usuario.nome : '' %>"
+        >
+      </div>
+      <div class="form-group">
+        <label for="conteudo">Comentário *</label>
+        <textarea
+          id="conteudo"
+          name="conteudo"
+          required
+          maxlength="1000"
+          rows="4"
+          placeholder="Escreva seu comentário sobre esta receita..."
+        ></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Publicar Comentário</button>
+    </form>
+  </div>
+
+  <!-- Lista de comentários -->
+  <% if (comentarios.length === 0) { %>
+    <div class="empty-state mt-1">
+      <p>Ainda não há comentários. Seja o primeiro a comentar!</p>
+    </div>
+  <% } else { %>
+    <div class="comentarios-lista">
+      <% comentarios.forEach(c => { %>
+        <div class="comentario-card card">
+          <div class="comentario-header">
+            <div class="comentario-avatar">
+              <%= c.autor_nome.charAt(0).toUpperCase() %>
+            </div>
+            <div class="comentario-info">
+              <strong><%= c.autor_nome %></strong>
+              <span class="comentario-data">
+                <%= new Date(c.created_at).toLocaleDateString('pt-BR', {
+                  day: '2-digit', month: 'long', year: 'numeric',
+                  hour: '2-digit', minute: '2-digit'
+                }) %>
+              </span>
+            </div>
+            <% if (typeof usuario !== 'undefined' && usuario && usuario.tipo === 'admin') { %>
+              <form
+                action="/receitas/<%= receita.id %>/comentarios/<%= c._id %>/excluir"
+                method="POST"
+                onsubmit="return confirm('Excluir comentário?')"
+                class="ml-auto"
+              >
+                <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
+              </form>
+            <% } %>
+          </div>
+          <p class="comentario-conteudo"><%= c.conteudo %></p>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+
+<%- include('../partials/footer') %>
