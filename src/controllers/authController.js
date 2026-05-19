@@ -6,7 +6,7 @@ const authController = {
     res.render('auth/login', { title: 'Login', error: req.flash('error') });
   },
 
-  login(req, res) {
+  async login(req, res) {
     const { email, senha } = req.body;
 
     if (!email || !senha) {
@@ -14,8 +14,8 @@ const authController = {
       return res.redirect('/login');
     }
 
-    const aluno = Aluno.findByEmail(email);
-    if (!aluno || !Aluno.validatePassword(senha, aluno.senha)) {
+    const aluno = await Aluno.findByEmail(email);
+    if (!aluno || !(await Aluno.validatePassword(senha, aluno.senha))) {
       req.flash('error', 'E-mail ou senha inválidos.');
       return res.redirect('/login');
     }
@@ -28,7 +28,7 @@ const authController = {
 
   logout(req, res) {
     req.session.destroy(() => res.redirect('/login'));
-  }
+  },
 };
 
 module.exports = authController;

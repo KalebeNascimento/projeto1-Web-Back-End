@@ -3,22 +3,23 @@ const Receita = require('../models/Receita');
 
 const comentarioController = {
   async showReceita(req, res) {
-    const receita = Receita.findById(req.params.id);
+    const receita = await Receita.findById(req.params.id);
     if (!receita) {
       req.flash('error', 'Receita não encontrada.');
       return res.redirect('/');
     }
 
-    receita.categorias = Receita.getCategorias(req.params.id);
-    receita.alunos_responsaveis = Receita.getAlunos(req.params.id);
+    const [categorias, alunos_responsaveis, comentarios] = await Promise.all([
+      Receita.getCategorias(req.params.id),
+      Receita.getAlunos(req.params.id),
+      Comentario.findAll({
+        where: { receita_id: Number(req.params.id) },
+        order: [['created_at', 'DESC']],
+      }),
+    ]);
 
-    let comentarios = [];
-    try {
-      comentarios = await Comentario.find({ receita_id: Number(req.params.id) })
-        .sort({ created_at: -1 });
-    } catch {
-      // MongoDB indisponível, exibe receita sem comentários
-    }
+    receita.categorias = categorias;
+    receita.alunos_responsaveis = alunos_responsaveis;
 
     res.render('public/receita', {
       title: receita.nome,
@@ -26,7 +27,7 @@ const comentarioController = {
       receita,
       comentarios,
       success: req.flash('success'),
-      error: req.flash('error')
+      error: req.flash('error'),
     });
   },
 
@@ -42,11 +43,11 @@ const comentarioController = {
       await Comentario.create({
         receita_id: Number(req.params.id),
         autor_nome: autor_nome.trim(),
-        conteudo: conteudo.trim()
+        conteudo: conteudo.trim(),
       });
       req.flash('success', 'Comentário adicionado com sucesso!');
     } catch {
-      req.flash('error', 'Erro ao salvar comentário. Verifique se o MongoDB está rodando.');
+      req.flash('error', 'Erro ao salvar comentário.');
     }
 
     res.redirect(`/receitas/${req.params.id}`);
@@ -54,13 +55,13 @@ const comentarioController = {
 
   async excluirComentario(req, res) {
     try {
-      await Comentario.findByIdAndDelete(req.params.comentarioId);
+      await Comentario.destroy({ where: { id: req.params.comentarioId } });
       req.flash('success', 'Comentário excluído.');
     } catch {
       req.flash('error', 'Erro ao excluir comentário.');
     }
     res.redirect(`/receitas/${req.params.id}`);
-  }
+  },
 };
 
 module.exports = comentarioController;

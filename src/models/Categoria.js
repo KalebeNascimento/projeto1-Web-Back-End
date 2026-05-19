@@ -1,26 +1,26 @@
-const db = require('../config/database');
+const { CategoriaModel } = require('./index');
 
 const Categoria = {
-  findAll() {
-    return db.prepare("SELECT * FROM categorias ORDER BY nome").all();
+  async findAll() {
+    return CategoriaModel.findAll({ order: [['nome', 'ASC']] });
   },
 
-  findById(id) {
-    return db.prepare("SELECT * FROM categorias WHERE id = ?").get(id);
+  async findById(id) {
+    return CategoriaModel.findByPk(id);
   },
 
-  create({ nome }) {
-    const result = db.prepare("INSERT INTO categorias (nome) VALUES (?)").run(nome);
-    return result.lastInsertRowid;
+  async create({ nome }) {
+    const categoria = await CategoriaModel.create({ nome });
+    return categoria.id;
   },
 
-  update(id, { nome }) {
-    db.prepare("UPDATE categorias SET nome = ? WHERE id = ?").run(nome, id);
+  async update(id, { nome }) {
+    await CategoriaModel.update({ nome }, { where: { id } });
   },
 
-  delete(id) {
-    db.prepare("DELETE FROM categorias WHERE id = ?").run(id);
-  }
+  async delete(id) {
+    await CategoriaModel.destroy({ where: { id } });
+  },
 };
 
 module.exports = Categoria;

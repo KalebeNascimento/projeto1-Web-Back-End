@@ -1,44 +1,48 @@
-const db = require('../config/database');
+const { HabilidadeModel, AlunoModel, AlunoHabilidade } = require('./index');
 
 const Habilidade = {
-  findAll() {
-    return db.prepare("SELECT * FROM habilidades ORDER BY nome").all();
+  async findAll() {
+    return HabilidadeModel.findAll({ order: [['nome', 'ASC']] });
   },
 
-  findById(id) {
-    return db.prepare("SELECT * FROM habilidades WHERE id = ?").get(id);
+  async findById(id) {
+    return HabilidadeModel.findByPk(id);
   },
 
-  create({ nome }) {
-    const result = db.prepare("INSERT INTO habilidades (nome) VALUES (?)").run(nome);
-    return result.lastInsertRowid;
+  async create({ nome }) {
+    const habilidade = await HabilidadeModel.create({ nome });
+    return habilidade.id;
   },
 
-  update(id, { nome }) {
-    db.prepare("UPDATE habilidades SET nome = ? WHERE id = ?").run(nome, id);
+  async update(id, { nome }) {
+    await HabilidadeModel.update({ nome }, { where: { id } });
   },
 
-  delete(id) {
-    db.prepare("DELETE FROM habilidades WHERE id = ?").run(id);
+  async delete(id) {
+    await HabilidadeModel.destroy({ where: { id } });
   },
 
-  getRelatorioHabilidades() {
-    const totalAlunos = db.prepare("SELECT COUNT(*) as total FROM alunos WHERE tipo = 'aluno'").get().total;
-    const habilidades = db.prepare(`
-      SELECT h.id, h.nome,
-             COUNT(ah.aluno_id) as total_alunos,
-             ROUND(AVG(ah.nivel), 1) as media_nivel
-      FROM habilidades h
-      LEFT JOIN aluno_habilidade ah ON ah.habilidade_id = h.id
-      GROUP BY h.id, h.nome
-      ORDER BY h.nome
-    `).all();
+  async getRelatorioHabilidades() {
+    const totalAlunos = await AlunoModel.count({ where: { tipo: 'aluno' } });
+    const habilidades = await HabilidadeModel.findAll({ order: [['nome', 'ASC']] });
 
-    return habilidades.map(h => ({
-      ...h,
-      proporcao: totalAlunos > 0 ? Math.round((h.total_alunos / totalAlunos) * 100) : 0
+    const resultado = await Promise.all(habilidades.map(async (h) => {
+      const rows = await AlunoHabilidade.findAll({ where: { habilidade_id: h.id } });
+      const total_alunos = rows.length;
+      const media_nivel = total_alunos > 0
+        ? Math.round((rows.reduce((s, r) => s + r.nivel, 0) / total_alunos) * 10) / 10
+        : 0;
+      return {
+        id: h.id,
+        nome: h.nome,
+        total_alunos,
+        media_nivel,
+        proporcao: totalAlunos > 0 ? Math.round((total_alunos / totalAlunos) * 100) : 0,
+      };
     }));
-  }
+
+    return resultado;
+  },
 };
 
 module.exports = Habilidade;

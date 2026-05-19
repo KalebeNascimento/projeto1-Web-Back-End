@@ -68,12 +68,12 @@ function apiAluno(req, res, next) {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/auth/login', (req, res) => {
+router.post('/auth/login', async (req, res) => {
   const { email, senha } = req.body;
   if (!email || !senha) return res.status(400).json({ erro: 'E-mail e senha são obrigatórios.' });
 
-  const aluno = Aluno.findByEmail(email);
-  if (!aluno || !Aluno.validatePassword(senha, aluno.senha))
+  const aluno = await Aluno.findByEmail(email);
+  if (!aluno || !(await Aluno.validatePassword(senha, aluno.senha)))
     return res.status(401).json({ erro: 'E-mail ou senha inválidos.' });
 
   req.session.usuario = { id: aluno.id, nome: aluno.nome, email: aluno.email, tipo: aluno.tipo };
@@ -137,11 +137,11 @@ router.get('/auth/me', apiAuth, (req, res) => {
  *               items:
  *                 $ref: '#/components/schemas/Receita'
  */
-router.get('/receitas', (req, res) => {
+router.get('/receitas', async (req, res) => {
   const { categoria_id } = req.query;
   const receitas = categoria_id
-    ? Receita.findByCategoria(categoria_id)
-    : Receita.findAll();
+    ? await Receita.findByCategoria(categoria_id)
+    : await Receita.findAll();
   res.json(receitas);
 });
 
@@ -163,11 +163,15 @@ router.get('/receitas', (req, res) => {
  *       404:
  *         description: Receita não encontrada
  */
-router.get('/receitas/:id', (req, res) => {
-  const receita = Receita.findById(req.params.id);
+router.get('/receitas/:id', async (req, res) => {
+  const receita = await Receita.findById(req.params.id);
   if (!receita) return res.status(404).json({ erro: 'Receita não encontrada.' });
-  receita.categorias = Receita.getCategorias(req.params.id);
-  receita.alunos_responsaveis = Receita.getAlunos(req.params.id);
+  const [categorias, alunos_responsaveis] = await Promise.all([
+    Receita.getCategorias(req.params.id),
+    Receita.getAlunos(req.params.id),
+  ]);
+  receita.categorias = categorias;
+  receita.alunos_responsaveis = alunos_responsaveis;
   res.json(receita);
 });
 
@@ -187,7 +191,7 @@ router.get('/receitas/:id', (req, res) => {
  *               items:
  *                 $ref: '#/components/schemas/Categoria'
  */
-router.get('/categorias', (req, res) => res.json(Categoria.findAll()));
+router.get('/categorias', async (req, res) => res.json(await Categoria.findAll()));
 
 /**
  * @swagger
@@ -205,7 +209,7 @@ router.get('/categorias', (req, res) => res.json(Categoria.findAll()));
  *               items:
  *                 $ref: '#/components/schemas/Habilidade'
  */
-router.get('/habilidades', (req, res) => res.json(Habilidade.findAll()));
+router.get('/habilidades', async (req, res) => res.json(await Habilidade.findAll()));
 
 /**
  * @swagger
@@ -223,8 +227,8 @@ router.get('/habilidades', (req, res) => res.json(Habilidade.findAll()));
  *               items:
  *                 $ref: '#/components/schemas/RelatorioHabilidade'
  */
-router.get('/relatorio/habilidades', (req, res) => {
-  res.json(Habilidade.getRelatorioHabilidades());
+router.get('/relatorio/habilidades', async (req, res) => {
+  res.json(await Habilidade.getRelatorioHabilidades());
 });
 
 // ════════════════════════════════════════════════════════
@@ -244,8 +248,8 @@ router.get('/relatorio/habilidades', (req, res) => {
  *       401:
  *         description: Não autenticado
  */
-router.get('/aluno/receitas', apiAuth, apiAluno, (req, res) => {
-  res.json(Receita.findByAluno(req.session.usuario.id));
+router.get('/aluno/receitas', apiAuth, apiAluno, async (req, res) => {
+  res.json(await Receita.findByAluno(req.session.usuario.id));
 });
 
 /**
@@ -290,18 +294,19 @@ router.get('/aluno/receitas', apiAuth, apiAluno, (req, res) => {
  *       401:
  *         description: Não autenticado
  */
-router.post('/aluno/receitas', apiAuth, apiAluno, (req, res) => {
+router.post('/aluno/receitas', apiAuth, apiAluno, async (req, res) => {
   const { nome, descricao, link_externo, categorias = [], coautores = [] } = req.body;
   if (!nome) return res.status(400).json({ erro: 'O nome da receita é obrigatório.' });
 
-  const id = Receita.create({ nome, descricao, link_externo, criado_por: req.session.usuario.id });
+  const id = await Receita.create({ nome, descricao, link_externo, criado_por: req.session.usuario.id });
   const alunosIds = [...new Set([req.session.usuario.id, ...coautores.map(Number)])];
-  Receita.setAlunos(id, alunosIds);
-  Receita.setCategorias(id, categorias.map(Number).filter(Boolean));
+  await Receita.setAlunos(id, alunosIds);
+  await Receita.setCategorias(id, categorias.map(Number).filter(Boolean));
 
-  const receita = Receita.findById(id);
-  receita.categorias = Receita.getCategorias(id);
-  receita.alunos_responsaveis = Receita.getAlunos(id);
+  const receita = await Receita.findById(id);
+  const [cats, alunos] = await Promise.all([Receita.getCategorias(id), Receita.getAlunos(id)]);
+  receita.categorias = cats;
+  receita.alunos_responsaveis = alunos;
   res.status(201).json(receita);
 });
 
@@ -342,23 +347,29 @@ router.post('/aluno/receitas', apiAuth, apiAluno, (req, res) => {
  *       404:
  *         description: Receita não encontrada
  */
-router.put('/aluno/receitas/:id', apiAuth, apiAluno, (req, res) => {
-  const receita = Receita.findById(req.params.id);
+router.put('/aluno/receitas/:id', apiAuth, apiAluno, async (req, res) => {
+  const [receita, responsavel] = await Promise.all([
+    Receita.findById(req.params.id),
+    Receita.isResponsavel(req.params.id, req.session.usuario.id),
+  ]);
   if (!receita) return res.status(404).json({ erro: 'Receita não encontrada.' });
-  if (!Receita.isResponsavel(req.params.id, req.session.usuario.id))
-    return res.status(403).json({ erro: 'Sem permissão para editar esta receita.' });
+  if (!responsavel) return res.status(403).json({ erro: 'Sem permissão para editar esta receita.' });
 
   const { nome, descricao, link_externo, categorias = [], coautores = [] } = req.body;
   if (!nome) return res.status(400).json({ erro: 'O nome da receita é obrigatório.' });
 
-  Receita.update(req.params.id, { nome, descricao, link_externo });
+  await Receita.update(req.params.id, { nome, descricao, link_externo });
   const alunosIds = [...new Set([req.session.usuario.id, ...coautores.map(Number)])];
-  Receita.setAlunos(req.params.id, alunosIds);
-  Receita.setCategorias(req.params.id, categorias.map(Number).filter(Boolean));
+  await Receita.setAlunos(req.params.id, alunosIds);
+  await Receita.setCategorias(req.params.id, categorias.map(Number).filter(Boolean));
 
-  const atualizada = Receita.findById(req.params.id);
-  atualizada.categorias = Receita.getCategorias(req.params.id);
-  atualizada.alunos_responsaveis = Receita.getAlunos(req.params.id);
+  const atualizada = await Receita.findById(req.params.id);
+  const [cats, alunos] = await Promise.all([
+    Receita.getCategorias(req.params.id),
+    Receita.getAlunos(req.params.id),
+  ]);
+  atualizada.categorias = cats;
+  atualizada.alunos_responsaveis = alunos;
   res.json(atualizada);
 });
 
@@ -383,13 +394,15 @@ router.put('/aluno/receitas/:id', apiAuth, apiAluno, (req, res) => {
  *       404:
  *         description: Receita não encontrada
  */
-router.delete('/aluno/receitas/:id', apiAuth, apiAluno, (req, res) => {
-  const receita = Receita.findById(req.params.id);
+router.delete('/aluno/receitas/:id', apiAuth, apiAluno, async (req, res) => {
+  const [receita, responsavel] = await Promise.all([
+    Receita.findById(req.params.id),
+    Receita.isResponsavel(req.params.id, req.session.usuario.id),
+  ]);
   if (!receita) return res.status(404).json({ erro: 'Receita não encontrada.' });
-  if (!Receita.isResponsavel(req.params.id, req.session.usuario.id))
-    return res.status(403).json({ erro: 'Sem permissão para excluir esta receita.' });
+  if (!responsavel) return res.status(403).json({ erro: 'Sem permissão para excluir esta receita.' });
 
-  Receita.delete(req.params.id);
+  await Receita.delete(req.params.id);
   res.json({ mensagem: 'Receita excluída com sucesso.' });
 });
 
@@ -414,8 +427,8 @@ router.delete('/aluno/receitas/:id', apiAuth, apiAluno, (req, res) => {
  *               items:
  *                 $ref: '#/components/schemas/HabilidadeAluno'
  */
-router.get('/aluno/habilidades', apiAuth, apiAluno, (req, res) => {
-  res.json(Aluno.getHabilidades(req.session.usuario.id));
+router.get('/aluno/habilidades', apiAuth, apiAluno, async (req, res) => {
+  res.json(await Aluno.getHabilidades(req.session.usuario.id));
 });
 
 /**
@@ -447,15 +460,15 @@ router.get('/aluno/habilidades', apiAuth, apiAluno, (req, res) => {
  *       400:
  *         description: Dados inválidos ou habilidade já cadastrada
  */
-router.post('/aluno/habilidades', apiAuth, apiAluno, (req, res) => {
+router.post('/aluno/habilidades', apiAuth, apiAluno, async (req, res) => {
   const { habilidade_id, nivel } = req.body;
   const nivelNum = parseInt(nivel);
   if (!habilidade_id || isNaN(nivelNum) || nivelNum < 0 || nivelNum > 10)
     return res.status(400).json({ erro: 'habilidade_id e nivel (0-10) são obrigatórios.' });
-  if (Aluno.hasHabilidade(req.session.usuario.id, habilidade_id))
+  if (await Aluno.hasHabilidade(req.session.usuario.id, habilidade_id))
     return res.status(400).json({ erro: 'Habilidade já cadastrada.' });
 
-  Aluno.addHabilidade(req.session.usuario.id, habilidade_id, nivelNum);
+  await Aluno.addHabilidade(req.session.usuario.id, habilidade_id, nivelNum);
   res.status(201).json({ mensagem: 'Habilidade adicionada.', habilidade_id, nivel: nivelNum });
 });
 
@@ -491,12 +504,12 @@ router.post('/aluno/habilidades', apiAuth, apiAluno, (req, res) => {
  *       400:
  *         description: Nível inválido
  */
-router.put('/aluno/habilidades/:habilidadeId', apiAuth, apiAluno, (req, res) => {
+router.put('/aluno/habilidades/:habilidadeId', apiAuth, apiAluno, async (req, res) => {
   const nivelNum = parseInt(req.body.nivel);
   if (isNaN(nivelNum) || nivelNum < 0 || nivelNum > 10)
     return res.status(400).json({ erro: 'Nível deve ser entre 0 e 10.' });
 
-  Aluno.updateHabilidade(req.session.usuario.id, req.params.habilidadeId, nivelNum);
+  await Aluno.updateHabilidade(req.session.usuario.id, req.params.habilidadeId, nivelNum);
   res.json({ mensagem: 'Nível atualizado.', nivel: nivelNum });
 });
 
@@ -517,8 +530,8 @@ router.put('/aluno/habilidades/:habilidadeId', apiAuth, apiAluno, (req, res) => 
  *       200:
  *         description: Habilidade removida
  */
-router.delete('/aluno/habilidades/:habilidadeId', apiAuth, apiAluno, (req, res) => {
-  Aluno.removeHabilidade(req.session.usuario.id, req.params.habilidadeId);
+router.delete('/aluno/habilidades/:habilidadeId', apiAuth, apiAluno, async (req, res) => {
+  await Aluno.removeHabilidade(req.session.usuario.id, req.params.habilidadeId);
   res.json({ mensagem: 'Habilidade removida com sucesso.' });
 });
 
@@ -545,8 +558,8 @@ router.delete('/aluno/habilidades/:habilidadeId', apiAuth, apiAluno, (req, res) 
  *       403:
  *         description: Acesso restrito ao administrador
  */
-router.get('/admin/alunos', apiAuth, apiAdmin, (req, res) => {
-  res.json(Aluno.findAllAlunos());
+router.get('/admin/alunos', apiAuth, apiAdmin, async (req, res) => {
+  res.json(await Aluno.findAllAlunos());
 });
 
 /**
@@ -573,13 +586,13 @@ router.get('/admin/alunos', apiAuth, apiAdmin, (req, res) => {
  *       400:
  *         description: Campos obrigatórios ausentes ou e-mail já cadastrado
  */
-router.post('/admin/alunos', apiAuth, apiAdmin, (req, res) => {
+router.post('/admin/alunos', apiAuth, apiAdmin, async (req, res) => {
   const { nome, email, senha } = req.body;
   if (!nome || !email || !senha)
     return res.status(400).json({ erro: 'Nome, e-mail e senha são obrigatórios.' });
   try {
-    const id = Aluno.create({ nome, email, senha, tipo: 'aluno' });
-    res.status(201).json(Aluno.findById(id));
+    const id = await Aluno.create({ nome, email, senha, tipo: 'aluno' });
+    res.status(201).json(await Aluno.findById(id));
   } catch {
     res.status(400).json({ erro: 'E-mail já cadastrado.' });
   }
@@ -615,16 +628,16 @@ router.post('/admin/alunos', apiAuth, apiAdmin, (req, res) => {
  *       404:
  *         description: Aluno não encontrado
  */
-router.put('/admin/alunos/:id', apiAuth, apiAdmin, (req, res) => {
-  const aluno = Aluno.findById(req.params.id);
+router.put('/admin/alunos/:id', apiAuth, apiAdmin, async (req, res) => {
+  const aluno = await Aluno.findById(req.params.id);
   if (!aluno || aluno.tipo === 'admin')
     return res.status(404).json({ erro: 'Aluno não encontrado.' });
   const { nome, email, senha } = req.body;
   if (!nome || !email)
     return res.status(400).json({ erro: 'Nome e e-mail são obrigatórios.' });
   try {
-    Aluno.update(req.params.id, { nome, email, senha });
-    res.json(Aluno.findById(req.params.id));
+    await Aluno.update(req.params.id, { nome, email, senha });
+    res.json(await Aluno.findById(req.params.id));
   } catch {
     res.status(400).json({ erro: 'E-mail já cadastrado por outro aluno.' });
   }
@@ -649,11 +662,11 @@ router.put('/admin/alunos/:id', apiAuth, apiAdmin, (req, res) => {
  *       404:
  *         description: Aluno não encontrado
  */
-router.delete('/admin/alunos/:id', apiAuth, apiAdmin, (req, res) => {
-  const aluno = Aluno.findById(req.params.id);
+router.delete('/admin/alunos/:id', apiAuth, apiAdmin, async (req, res) => {
+  const aluno = await Aluno.findById(req.params.id);
   if (!aluno || aluno.tipo === 'admin')
     return res.status(404).json({ erro: 'Aluno não encontrado.' });
-  Aluno.delete(req.params.id);
+  await Aluno.delete(req.params.id);
   res.json({ mensagem: 'Aluno excluído com sucesso.' });
 });
 
@@ -672,7 +685,7 @@ router.delete('/admin/alunos/:id', apiAuth, apiAdmin, (req, res) => {
  *       200:
  *         description: Lista de categorias
  */
-router.get('/admin/categorias', apiAuth, apiAdmin, (req, res) => res.json(Categoria.findAll()));
+router.get('/admin/categorias', apiAuth, apiAdmin, async (req, res) => res.json(await Categoria.findAll()));
 
 /**
  * @swagger
@@ -696,12 +709,12 @@ router.get('/admin/categorias', apiAuth, apiAdmin, (req, res) => res.json(Catego
  *       400:
  *         description: Nome obrigatório ou já existe
  */
-router.post('/admin/categorias', apiAuth, apiAdmin, (req, res) => {
+router.post('/admin/categorias', apiAuth, apiAdmin, async (req, res) => {
   const { nome } = req.body;
   if (!nome) return res.status(400).json({ erro: 'Nome é obrigatório.' });
   try {
-    const id = Categoria.create({ nome });
-    res.status(201).json(Categoria.findById(id));
+    const id = await Categoria.create({ nome });
+    res.status(201).json(await Categoria.findById(id));
   } catch {
     res.status(400).json({ erro: 'Categoria já existe.' });
   }
@@ -735,14 +748,14 @@ router.post('/admin/categorias', apiAuth, apiAdmin, (req, res) => {
  *       404:
  *         description: Não encontrada
  */
-router.put('/admin/categorias/:id', apiAuth, apiAdmin, (req, res) => {
-  const categoria = Categoria.findById(req.params.id);
+router.put('/admin/categorias/:id', apiAuth, apiAdmin, async (req, res) => {
+  const categoria = await Categoria.findById(req.params.id);
   if (!categoria) return res.status(404).json({ erro: 'Categoria não encontrada.' });
   const { nome } = req.body;
   if (!nome) return res.status(400).json({ erro: 'Nome é obrigatório.' });
   try {
-    Categoria.update(req.params.id, { nome });
-    res.json(Categoria.findById(req.params.id));
+    await Categoria.update(req.params.id, { nome });
+    res.json(await Categoria.findById(req.params.id));
   } catch {
     res.status(400).json({ erro: 'Já existe uma categoria com esse nome.' });
   }
@@ -767,10 +780,10 @@ router.put('/admin/categorias/:id', apiAuth, apiAdmin, (req, res) => {
  *       404:
  *         description: Não encontrada
  */
-router.delete('/admin/categorias/:id', apiAuth, apiAdmin, (req, res) => {
-  if (!Categoria.findById(req.params.id))
+router.delete('/admin/categorias/:id', apiAuth, apiAdmin, async (req, res) => {
+  if (!(await Categoria.findById(req.params.id)))
     return res.status(404).json({ erro: 'Categoria não encontrada.' });
-  Categoria.delete(req.params.id);
+  await Categoria.delete(req.params.id);
   res.json({ mensagem: 'Categoria excluída com sucesso.' });
 });
 
@@ -789,7 +802,7 @@ router.delete('/admin/categorias/:id', apiAuth, apiAdmin, (req, res) => {
  *       200:
  *         description: Lista de habilidades
  */
-router.get('/admin/habilidades', apiAuth, apiAdmin, (req, res) => res.json(Habilidade.findAll()));
+router.get('/admin/habilidades', apiAuth, apiAdmin, async (req, res) => res.json(await Habilidade.findAll()));
 
 /**
  * @swagger
@@ -813,12 +826,12 @@ router.get('/admin/habilidades', apiAuth, apiAdmin, (req, res) => res.json(Habil
  *       400:
  *         description: Nome obrigatório ou já existe
  */
-router.post('/admin/habilidades', apiAuth, apiAdmin, (req, res) => {
+router.post('/admin/habilidades', apiAuth, apiAdmin, async (req, res) => {
   const { nome } = req.body;
   if (!nome) return res.status(400).json({ erro: 'Nome é obrigatório.' });
   try {
-    const id = Habilidade.create({ nome });
-    res.status(201).json(Habilidade.findById(id));
+    const id = await Habilidade.create({ nome });
+    res.status(201).json(await Habilidade.findById(id));
   } catch {
     res.status(400).json({ erro: 'Habilidade já existe.' });
   }
@@ -852,14 +865,14 @@ router.post('/admin/habilidades', apiAuth, apiAdmin, (req, res) => {
  *       404:
  *         description: Não encontrada
  */
-router.put('/admin/habilidades/:id', apiAuth, apiAdmin, (req, res) => {
-  const habilidade = Habilidade.findById(req.params.id);
+router.put('/admin/habilidades/:id', apiAuth, apiAdmin, async (req, res) => {
+  const habilidade = await Habilidade.findById(req.params.id);
   if (!habilidade) return res.status(404).json({ erro: 'Habilidade não encontrada.' });
   const { nome } = req.body;
   if (!nome) return res.status(400).json({ erro: 'Nome é obrigatório.' });
   try {
-    Habilidade.update(req.params.id, { nome });
-    res.json(Habilidade.findById(req.params.id));
+    await Habilidade.update(req.params.id, { nome });
+    res.json(await Habilidade.findById(req.params.id));
   } catch {
     res.status(400).json({ erro: 'Já existe uma habilidade com esse nome.' });
   }
@@ -884,10 +897,10 @@ router.put('/admin/habilidades/:id', apiAuth, apiAdmin, (req, res) => {
  *       404:
  *         description: Não encontrada
  */
-router.delete('/admin/habilidades/:id', apiAuth, apiAdmin, (req, res) => {
-  if (!Habilidade.findById(req.params.id))
+router.delete('/admin/habilidades/:id', apiAuth, apiAdmin, async (req, res) => {
+  if (!(await Habilidade.findById(req.params.id)))
     return res.status(404).json({ erro: 'Habilidade não encontrada.' });
-  Habilidade.delete(req.params.id);
+  await Habilidade.delete(req.params.id);
   res.json({ mensagem: 'Habilidade excluída com sucesso.' });
 });
 
