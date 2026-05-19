@@ -8,11 +8,19 @@ const bcrypt = require('bcryptjs');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./src/config/swagger');
 
+const dns = require('dns');
 const mongoose = require('mongoose');
 const db_mongoose = require('./src/config/mongodb');
 const { sequelize, AlunoModel, CategoriaModel, HabilidadeModel } = require('./src/models/index');
 
-mongoose.connect(db_mongoose.connection).then(() => {
+// Em redes corporativas o resolver DNS do Node falha intermitentemente na
+// consulta SRV do Atlas (querySrv ECONNREFUSED). Forçar um DNS público estável
+// contorna isso sem afetar o restante da aplicação.
+dns.setServers(['8.8.8.8', '1.1.1.1']);
+
+mongoose.connect(db_mongoose.connection, {
+  serverSelectionTimeoutMS: 10000,
+}).then(() => {
   console.log('MongoDB conectado:', db_mongoose.connection);
 }).catch((err) => {
   console.warn('MongoDB não disponível. Comentários estarão desativados.');
