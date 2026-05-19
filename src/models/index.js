@@ -45,17 +45,6 @@ const ReceitaModel = sequelize.define('Receita', {
   updatedAt: false,
 });
 
-const ComentarioModel = sequelize.define('Comentario', {
-  receita_id:  { type: DataTypes.INTEGER, allowNull: false },
-  autor_nome:  { type: DataTypes.STRING(100), allowNull: false },
-  conteudo:    { type: DataTypes.STRING(1000), allowNull: false },
-}, {
-  tableName: 'comentarios',
-  timestamps: true,
-  createdAt: 'created_at',
-  updatedAt: false,
-});
-
 // ── Junction tables ───────────────────────────────────────
 
 const ReceitaCategoria = sequelize.define('ReceitaCategoria', {}, {
@@ -101,16 +90,12 @@ HabilidadeModel.belongsToMany(AlunoModel, {
   through: AlunoHabilidade, foreignKey: 'habilidade_id', otherKey: 'aluno_id', as: 'Alunos',
 });
 
-ReceitaModel.hasMany(ComentarioModel, { foreignKey: 'receita_id' });
-ComentarioModel.belongsTo(ReceitaModel, { foreignKey: 'receita_id' });
-
 module.exports = {
   sequelize,
   AlunoModel,
   CategoriaModel,
   HabilidadeModel,
   ReceitaModel,
-  ComentarioModel,
   ReceitaCategoria,
   ReceitaAluno,
   AlunoHabilidade,

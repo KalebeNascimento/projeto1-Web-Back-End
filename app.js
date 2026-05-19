@@ -7,7 +7,16 @@ const bcrypt = require('bcryptjs');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./src/config/swagger');
 
+const mongoose = require('mongoose');
+const db_mongoose = require('./src/config/mongodb');
 const { sequelize, AlunoModel, CategoriaModel, HabilidadeModel } = require('./src/models/index');
+
+mongoose.connect(db_mongoose.connection).then(() => {
+  console.log('MongoDB conectado:', db_mongoose.connection);
+}).catch((err) => {
+  console.warn('MongoDB não disponível. Comentários estarão desativados.');
+  console.error('Erro MongoDB:', err.message);
+});
 
 const app = express();
 

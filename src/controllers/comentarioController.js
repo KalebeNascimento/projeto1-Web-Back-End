@@ -9,17 +9,21 @@ const comentarioController = {
       return res.redirect('/');
     }
 
-    const [categorias, alunos_responsaveis, comentarios] = await Promise.all([
+    const [categorias, alunos_responsaveis] = await Promise.all([
       Receita.getCategorias(req.params.id),
       Receita.getAlunos(req.params.id),
-      Comentario.findAll({
-        where: { receita_id: Number(req.params.id) },
-        order: [['created_at', 'DESC']],
-      }),
     ]);
 
     receita.categorias = categorias;
     receita.alunos_responsaveis = alunos_responsaveis;
+
+    let comentarios = [];
+    try {
+      comentarios = await Comentario.find({ receita_id: Number(req.params.id) })
+        .sort({ created_at: -1 });
+    } catch {
+      // MongoDB indisponível, exibe receita sem comentários
+    }
 
     res.render('public/receita', {
       title: receita.nome,
@@ -47,7 +51,7 @@ const comentarioController = {
       });
       req.flash('success', 'Comentário adicionado com sucesso!');
     } catch {
-      req.flash('error', 'Erro ao salvar comentário.');
+      req.flash('error', 'Erro ao salvar comentário. Verifique se o MongoDB está rodando.');
     }
 
     res.redirect(`/receitas/${req.params.id}`);
@@ -55,7 +59,7 @@ const comentarioController = {
 
   async excluirComentario(req, res) {
     try {
-      await Comentario.destroy({ where: { id: req.params.comentarioId } });
+      await Comentario.findByIdAndDelete(req.params.comentarioId);
       req.flash('success', 'Comentário excluído.');
     } catch {
       req.flash('error', 'Erro ao excluir comentário.');
