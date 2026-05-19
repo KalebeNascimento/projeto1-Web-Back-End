@@ -25,6 +25,7 @@ Permite que alunos criem e organizem receitas, associem-nas a categorias, regist
 | **Sequelize** | ORM para banco de dados relacional (dados principais) |
 | **sqlite3** | Driver SQLite utilizado pelo Sequelize |
 | **Mongoose** | ODM para MongoDB (comentários) |
+| **dotenv** | Carregamento de variáveis de ambiente do arquivo `.env` |
 | **bcryptjs** | Hash seguro de senhas |
 | **express-session** | Gerenciamento de sessões |
 | **connect-flash** | Mensagens de feedback ao usuário |
@@ -136,10 +137,7 @@ habilidades               receita_aluno     categorias
 3. Em **Security → QuickStart**, defina usuário e senha
 4. Em **Databases → Connect → Drivers**, copie a string de conexão
 5. Em **Network Access**, libere seu IP (ou `0.0.0.0/0` para qualquer IP)
-6. Crie o arquivo `.env` na raiz do projeto:
-```
-MONGO_URI=mongodb+srv://usuario:senha@cluster0.xxxxx.mongodb.net/portfolio_culinario
-```
+6. Copie a string de conexão — você vai usá-la no passo 3 da instalação
 
 #### Opção B — MongoDB local
 
@@ -160,14 +158,13 @@ npm install
 
 **3. Configure a string de conexão do MongoDB**
 
-Edite o arquivo `src/config/mongodb.js`:
-```js
-const StringCon = {
-  connection: 'mongodb://localhost/portfolio_culinario'  // local
-  // ou cole aqui a string do Atlas
-}
-module.exports = StringCon;
+Crie um arquivo `.env` na raiz do projeto:
 ```
+MONGO_URI=mongodb+srv://usuario:senha@cluster0.xxxxx.mongodb.net/portfolio_culinario
+```
+
+> O arquivo `.env` já está no `.gitignore` e nunca será enviado ao repositório.
+> Se o MongoDB estiver offline ou o `.env` não existir, a aplicação continua funcionando — apenas os comentários ficam desativados.
 
 **4. Inicie o servidor**
 ```bash
