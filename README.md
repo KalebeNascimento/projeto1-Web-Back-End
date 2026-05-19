@@ -22,7 +22,8 @@ Permite que alunos criem e organizem receitas, associem-nas a categorias, regist
 | **Node.js** | Ambiente de execução JavaScript |
 | **Express** | Framework web |
 | **EJS** | Template engine para as views |
-| **better-sqlite3** | Banco de dados relacional SQLite (dados principais) |
+| **Sequelize** | ORM para banco de dados relacional (dados principais) |
+| **sqlite3** | Driver SQLite utilizado pelo Sequelize |
 | **Mongoose** | ODM para MongoDB (comentários) |
 | **bcryptjs** | Hash seguro de senhas |
 | **express-session** | Gerenciamento de sessões |
@@ -48,8 +49,8 @@ projeto1-Web-Back-End/
 │       └── style.css                 # Estilos globais
 └── src/
     ├── config/
-    │   ├── database.js               # Conexão e inicialização do banco SQLite
-    │   ├── mongodb.js                # Conexão com MongoDB
+    │   ├── database.js               # Instância Sequelize (SQLite)
+    │   ├── mongodb.js                # String de conexão com MongoDB
     │   └── swagger.js                # Configuração do Swagger/OpenAPI
     ├── controllers/
     │   ├── authController.js         # Login e logout
@@ -60,10 +61,11 @@ projeto1-Web-Back-End/
     ├── middlewares/
     │   └── auth.js                   # Proteção de rotas por perfil
     ├── models/
-    │   ├── Aluno.js                  # Model SQLite
-    │   ├── Receita.js                # Model SQLite
-    │   ├── Categoria.js              # Model SQLite
-    │   ├── Habilidade.js             # Model SQLite
+    │   ├── index.js                  # Definição dos Models Sequelize e associações
+    │   ├── Aluno.js                  # Wrapper async — Sequelize (SQLite)
+    │   ├── Receita.js                # Wrapper async — Sequelize (SQLite)
+    │   ├── Categoria.js              # Wrapper async — Sequelize (SQLite)
+    │   ├── Habilidade.js             # Wrapper async — Sequelize (SQLite)
     │   └── Comentario.js             # Model Mongoose (MongoDB)
     ├── routes/
     │   ├── auth.js
@@ -180,7 +182,7 @@ npm start
 | `http://localhost:3000/login` | Login |
 | `http://localhost:3000/api-docs` | Swagger UI |
 
-> O banco SQLite (`database.db`) é criado automaticamente na primeira execução com dados iniciais.
+> O banco SQLite (`database.db`) é criado automaticamente pelo Sequelize na primeira execução (`sequelize.sync()`), junto com os dados iniciais.
 > Se o MongoDB estiver offline, a aplicação continua funcionando normalmente — apenas os comentários ficam indisponíveis.
 
 ---
@@ -297,7 +299,7 @@ A aplicação disponibiliza uma REST API completa com documentação interativa.
 - Sessões com secret e expiração de 8 horas
 - Middleware de autenticação protegendo todas as rotas privadas
 - Validação de propriedade antes de editar/excluir receitas
-- Foreign keys habilitadas no SQLite (`PRAGMA foreign_keys = ON`)
+- Queries parametrizadas via Sequelize ORM (proteção contra SQL injection)
 - Validação de campos obrigatórios em todos os controllers
 
 ---
